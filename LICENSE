@@ -1,10 +1,9 @@
                     GNU GENERAL PUBLIC LICENSE
-                       Version 3, 29 June 2007
+                       Version 3, 29 June 20
 
  Copyright (C) 2007 Free Software Foundation, Inc. [http://fsf.org/]
  Everyone is permitted to copy and distribute verbatim copies
  of this license document, but changing it is not allowed.
-
                             Preamble
 
   The GNU General Public License is a free, copyleft license for
@@ -616,4 +615,57 @@ above cannot be given local legal effect according to their terms,
 reviewing courts shall apply local law that most closely approximates
 an absolute waiver of all civil liability in connection with the
 Program, unless a warranty or assumption of liability accompanies a
-copy of the Program in return for a fee.
+copy of the Program in return for a fee.pip install python-telegram-bot pytube
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from pytube import YouTube
+
+# Bot tokenni BotFather orqali olingan token bilan almashtiring
+TOKEN = 'YOUR_BOT_TOKEN'
+
+def start(update: Update, context):
+    update.message.reply_text('Salom! Video yuklab olish uchun YouTube video havolasini yuboring.')
+
+def download_video(update: Update, context):
+    # Foydalanuvchidan video havolasini olish
+    url = update.message.text
+    try:
+        # YouTube video ob'ektini yaratish
+        yt = YouTube(url)
+        
+        # Video sifatini tanlash
+        stream = yt.streams.get_highest_resolution()
+        
+        # Faylni yuklab olish
+        stream.download(filename="downloaded_video.mp4")
+        
+        # Foydalanuvchiga yuklab olish muvaffaqiyatli bo'lganligini bildiradigan xabar yuborish
+        update.message.reply_text('Video muvaffaqiyatli yuklab olindi. Endi video faylni yuklab olish mumkin.')
+        
+        # Video faylini foydalanuvchiga yuborish
+        with open("downloaded_video.mp4", 'rb') as video:
+            update.message.reply_video(video)
+        
+    except Exception as e:
+        update.message.reply_text(f"Xatolik yuz berdi: {str(e)}")
+
+def main():
+    # Updater obyektini yaratish va tokenni qo'llash
+    updater = Updater(TOKEN, use_context=True)
+
+    # Dispatcher ni olish
+    dispatcher = updater.dispatcher
+
+    # /start komandasi uchun handler
+    dispatcher.add_handler(CommandHandler('start', start))
+
+    # Video havolasini yuborgan foydalanuvchilarni qayta ishlash
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, download_video))
+
+    # Botni ishga tushirish
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
+
